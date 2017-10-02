@@ -1,4 +1,5 @@
 import React, { Component} from 'react'
+import RouteInfo from './route_info'
 
 const testLocation = new google.maps.LatLng(37.7758, -122.435);
 
@@ -23,7 +24,9 @@ class Map extends Component {
     var destinationInput = document.getElementById('destination-input');
     var modeSelector = document.getElementById('mode-selector');
     this.directionsService = new google.maps.DirectionsService;
-    this.directionsDisplay = new google.maps.DirectionsRenderer;
+    this.directionsDisplay = new google.maps.DirectionsRenderer({
+      draggable:true
+    });
     this.directionsDisplay.setMap(this.map);
 
     var originAutocomplete = new google.maps.places.Autocomplete(
@@ -37,21 +40,23 @@ class Map extends Component {
 
     this.setupPlaceChangedListener(originAutocomplete, 'ORIG');
     this.setupPlaceChangedListener(destinationAutocomplete, 'DEST');
+
+
+
   }
 
   setupClickListener(id, mode){
     var radioButton = document.getElementById(id);
-    var me = this;
+    var that = this;
     radioButton.addEventListener('click', function() {
-      me.travelMode = mode;
-      me.deleteRoutes(me.state.routes);
-      me.route();
+      that.travelMode = mode;
+      that.route();
     });
   }
 
   setupPlaceChangedListener(autocomplete, mode){
-    var me = this;
-    autocomplete.bindTo('bounds', me.map);
+    var that = this;
+    autocomplete.bindTo('bounds', that.map);
     autocomplete.addListener('place_changed', function() {
       var place = autocomplete.getPlace();
       if (!place.place_id) {
@@ -59,11 +64,11 @@ class Map extends Component {
         return;
       }
       if (mode === 'ORIG') {
-        me.originPlaceId = place.place_id;
+        that.originPlaceId = place.place_id;
       } else {
-        me.destinationPlaceId = place.place_id;
+        that.destinationPlaceId = place.place_id;
       }
-      me.route();
+      that.route();
     });
   }
 
@@ -71,8 +76,12 @@ class Map extends Component {
     if (!this.originPlaceId || !this.destinationPlaceId) {
       return;
     }
-    var me = this;
+    var that = this;
+    that.deleteRoutes(this.state.routes);
+    that.setState({routes: []});
     var routes = [];
+
+    google.maps.event.clearListeners(that.directionsDisplay);
 
     this.directionsService.route({
       origin: {'placeId': this.originPlaceId},
@@ -80,54 +89,33 @@ class Map extends Component {
       travelMode: this.travelMode,
       provideRouteAlternatives: true,
     }, function(response, status) {
+
       if (status === 'OK') {
-        me.directionsDisplay.setDirections(response);
-        var summaryPanel = document.getElementById('directions-panel');
-        summaryPanel.innerHTML = '';
-        for (var x = 0; x < response.routes.length; x++) {
+        that.directionsDisplay.setDirections(response);
+        that.drawAltRoutes(response, routes);
 
-          var route = new google.maps.DirectionsRenderer({
-            map: me.map,
-            directions: response,
-            routeIndex: x,
-            suppressMarkers: true
-          });
-
-          routes.push(route);
-          me.setState({routes: routes});
-
-          summaryPanel.innerHTML += '<hr><br><b> Route ' + (x + 1) + ':<br>';
-          var route = response.routes[x];
-          for (var y = 0; y < route.legs.length; y++) {
-            var routeSegment = y + 1;
-
-            summaryPanel.innerHTML += route.legs[y].start_address + ' to ';
-            summaryPanel.innerHTML += route.legs[y].end_address + '<br>';
-            summaryPanel.innerHTML += route.legs[y].distance.text + '<br><br>';
-
-            var steps = route.legs[y].steps;
-            for (var z = 0; z < steps.length; z++) {
-              var nextSegment = steps[z].path;
-              summaryPanel.innerHTML += "<li>" + steps[z].instructions;
-
-              var dist_dur = "";
-              if (steps[z].distance && steps[z].distance.text) dist_dur += steps[z].distance.text;
-              if (steps[z].duration && steps[z].duration.text) dist_dur += "&nbsp;" + steps[z].duration.text;
-              if (dist_dur != "") {
-                summaryPanel.innerHTML += "(" + dist_dur + ")<br /></li>";
-              } else {
-                summaryPanel.innerHTML += "</li>";
-              }
-
-            }
-
-            summaryPanel.innerHTML += "<br>";
-          }
-        }
       } else {
         window.alert('Directions request failed due to ' + status);
       }
     });
+  }
+
+  drawAltRoutes(response,routes){
+    for (var x = 0; x < response.routes.length; x++) {
+      var route = new google.maps.DirectionsRenderer({
+        map: this.map,
+        directions: response,
+        routeIndex: x,
+        suppressMarkers: true
+      });
+      routes.push(route);
+      this.setState({routes: routes});
+      google.maps.event.addListener(this.directionsDisplay, 'directions_changed', function() {
+        this.originPlaceId = this.directionsDisplay.directions.geocoded_waypoints[0].place_id;
+        this.destinationPlaceId = this.directionsDisplay.directions.geocoded_waypoints[1].place_id;
+        this.route();
+      }.bind(this));
+    }
   }
 
   changeRouteIndex(idx){
@@ -141,6 +129,9 @@ class Map extends Component {
   }
 
   render(){
+    var routes = this.state.routes;
+    var routesKeys = Object.keys(routes);
+
     return (
       <div id='container'>
         <input id="origin-input" className="controls" type="text"
@@ -162,10 +153,15 @@ class Map extends Component {
         <div id='map-container'>
           <div id='map' ref='map'></div>
         </div>
-        <input id="btn1" type="button" value="route1" onClick={()=>{this.changeRouteIndex(0)}} />
-        <input id="btn2" type="button" value="route2" onClick={()=>{this.changeRouteIndex(1)}} />
-        <input id="btn3" type="button" value="route3" onClick={()=>{this.changeRouteIndex(2)}} />
-        <label id="directions-panel"></label>
+        {
+          routesKeys.map( key => {
+            return <RouteInfo
+              key={key}
+              routeIndex={routes[key].routeIndex}
+              route={routes[key].directions.routes[key]}
+              />;
+          })
+        }
       </div>
     )
   }
