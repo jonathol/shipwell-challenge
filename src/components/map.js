@@ -6,7 +6,10 @@ const testLocation = new google.maps.LatLng(37.7758, -122.435);
 class Map extends Component {
   constructor(props){
     super(props)
-    this.state = {routes: []};
+    this.state = {
+      routes: [],
+      markers: []
+    };
   }
   componentDidMount() {
     var mapOptions = {
@@ -24,6 +27,7 @@ class Map extends Component {
     var destinationInput = document.getElementById('destination-input');
     var modeSelector = document.getElementById('mode-selector');
     this.directionsService = new google.maps.DirectionsService;
+    this.placesService = new google.maps.places.PlacesService(this.map);
     this.directionsDisplay = new google.maps.DirectionsRenderer({
       draggable:true
     });
@@ -68,8 +72,28 @@ class Map extends Component {
       } else {
         that.destinationPlaceId = place.place_id;
       }
+      var request = {
+        placeId: place.place_id
+      }
+      that.placesService.getDetails(request, function(place, status) {
+        if (status == google.maps.places.PlacesServiceStatus.OK) {
+          var marker = new google.maps.Marker({
+            map: that.map,
+            position: place.geometry.location
+          });
+          var markers = that.state.markers;
+          markers.push(marker);
+          that.setState({markers: markers});
+        }
+      });
       that.route();
     });
+  }
+
+  deleteMarkers(){
+    for (var i = 0; i < this.state.markers.length; i++) {
+      this.state.markers[i].setMap(null);
+    }
   }
 
   route(){
@@ -77,8 +101,8 @@ class Map extends Component {
       return;
     }
     var that = this;
-    that.deleteRoutes(this.state.routes);
-    that.setState({routes: []});
+    this.deleteRoutes(this.state.routes);
+    this.setState({routes: []});
     var routes = [];
 
     google.maps.event.clearListeners(that.directionsDisplay);
@@ -93,7 +117,7 @@ class Map extends Component {
       if (status === 'OK') {
         that.directionsDisplay.setDirections(response);
         that.drawAltRoutes(response, routes);
-
+        that.deleteMarkers();
       } else {
         window.alert('Directions request failed due to ' + status);
       }
@@ -134,7 +158,7 @@ class Map extends Component {
     var that = this;
 
     return (
-      <div id='container'>        
+      <div id='container'>
         <div id='options-container'>
           <div id="mode-selector" className="controls">
             <input type="radio" name="type" id="changemode-walking" defaultChecked="checked"/>
