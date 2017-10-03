@@ -44,7 +44,6 @@ html, body {
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   border: 0;
-  border-right: 1px solid grey;
   border-bottom: 1px solid grey;
   outline: none;
   width: 100%;
@@ -70,7 +69,7 @@ html, body {
 
 #mode-selector input {
   padding-right: 5px;
-  margin-right: 5px;
+  margin-right: 10px;
   margin-left: 10px;
 }
 
@@ -88,7 +87,7 @@ html, body {
 #map-container {
   width: 100%;
   height: 70vh;
-  border-top: 1px solid grey;
+  border-bottom: 1px solid grey;
 }
 
 #map {
@@ -162,6 +161,8 @@ html, body {
     height: 90vh;
     order: 3;
     overflow: hidden;
+    border-bottom: 0;
+    border-top: 1px solid grey;
   }
 
   #routes-container {
@@ -169,6 +170,10 @@ html, body {
     height: 70vh;
     order: 2;
     overflow: auto;
+    border-right: 1px solid grey;
+  }
+
+  .controls{
     border-right: 1px solid grey;
   }
 
