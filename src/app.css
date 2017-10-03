@@ -136,6 +136,10 @@ html, body {
   outline: none;
 }
 
+.directions-container ol{
+  list-style-type: none;
+}
+
 
 .hidden {
   display: none;
@@ -168,7 +172,5 @@ html, body {
     border-right: 1px solid grey;
   }
 
-  .directions-container ol{
-    list-style-type: none;
-  }
+
 }
