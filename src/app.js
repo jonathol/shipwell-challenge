@@ -6,10 +6,10 @@ import Map from './components/map'
 class App extends Component {
   render() {
     return (
-
-      <Map/>
-
-
+      <div>
+        <h1 className='header'>Shipwell Challenge</h1>
+        <Map/>
+      </div>
     );
   }
 }

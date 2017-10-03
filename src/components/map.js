@@ -131,37 +131,43 @@ class Map extends Component {
   render(){
     var routes = this.state.routes;
     var routesKeys = Object.keys(routes);
+    var that = this;
 
     return (
-      <div id='container'>
-        <input id="origin-input" className="controls" type="text"
-        placeholder="Enter an origin location"/>
+      <div id='container'>        
+        <div id='options-container'>
+          <div id="mode-selector" className="controls">
+            <input type="radio" name="type" id="changemode-walking" defaultChecked="checked"/>
+            <label htmlFor="changemode-walking">Walking</label>
 
-        <input id="destination-input" className="controls" type="text"
+            <input type="radio" name="type" id="changemode-transit"/>
+            <label htmlFor="changemode-transit">Transit</label>
+
+            <input type="radio" name="type" id="changemode-driving"/>
+            <label htmlFor="changemode-driving">Driving</label>
+          </div>
+
+          <input id="origin-input" className="controls" type="text"
+            placeholder="Enter an origin location"/>
+
+          <input id="destination-input" className="controls" type="text"
             placeholder="Enter a destination location"/>
-
-        <div id="mode-selector" className="controls">
-          <input type="radio" name="type" id="changemode-walking" defaultChecked="checked"/>
-          <label htmlFor="changemode-walking">Walking</label>
-
-          <input type="radio" name="type" id="changemode-transit"/>
-          <label htmlFor="changemode-transit">Transit</label>
-
-          <input type="radio" name="type" id="changemode-driving"/>
-          <label htmlFor="changemode-driving">Driving</label>
         </div>
         <div id='map-container'>
           <div id='map' ref='map'></div>
         </div>
-        {
-          routesKeys.map( key => {
-            return <RouteInfo
-              key={key}
-              routeIndex={routes[key].routeIndex}
-              route={routes[key].directions.routes[key]}
-              />;
-          })
-        }
+        <div id='routes-container'>
+          {
+            routesKeys.map( key => {
+              return <RouteInfo
+                key={key}
+                routeIndex={routes[key].routeIndex}
+                route={routes[key].directions.routes[key]}
+                changeRouteIndex={()=>{this.changeRouteIndex(routes[key].routeIndex)}}
+                />;
+            })
+          }
+        </div>
       </div>
     )
   }
